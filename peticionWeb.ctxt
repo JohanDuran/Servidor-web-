@@ -1,0 +1,19 @@
+#BlueJ class context
+comment0.target=peticionWeb
+comment1.params=mensaje
+comment1.target=void\ depura(java.lang.String)
+comment2.params=mensaje\ gravedad
+comment2.target=void\ depura(java.lang.String,\ int)
+comment3.params=peticion
+comment3.target=peticionWeb(java.net.Socket)
+comment4.params=
+comment4.target=void\ run()
+comment5.params=tipoArchivo
+comment5.target=boolean\ esAceptado(java.lang.String)
+comment6.params=request\ file
+comment6.target=boolean\ guardarPeticion(java.lang.String,\ java.lang.String)
+comment7.params=nombreFichero
+comment7.target=java.lang.String\ existeFichero(java.lang.String)
+comment8.params=sfichero
+comment8.target=void\ retornaFichero(java.lang.String)
+numComments=9
