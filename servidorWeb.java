@@ -9,7 +9,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class servidorWeb
+public class ServidorWeb
 {
     int puerto = 90;
     
@@ -46,7 +46,7 @@ public class servidorWeb
             while(true)  // bucle infinito .... ya veremos como hacerlo de otro modo
             {
                 Socket peticion = s.accept();
-                peticionWeb pCliente = new peticionWeb(peticion);
+                PeticionWeb pCliente = new PeticionWeb(peticion);
                 pCliente.start();
             }
             

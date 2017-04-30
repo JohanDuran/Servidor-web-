@@ -12,7 +12,7 @@ public class controller
 {
 
     public static void main(){
-        servidorWeb server = new servidorWeb();
+        ServidorWeb server = new ServidorWeb();
         server.arranca();
     }
 }

@@ -2,14 +2,30 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-class peticionWeb extends Thread
+class PeticionWeb extends Thread
 {
+    //cantidad de peticiones
     int contador = 0;
-
+    //Tipos de error
+    String error400="Error 400 - Bad Request";
+    String error404="Error 404 - Not Found";
+    String error406="Error 406 - Not Acceptable";
+    //variables de debuggeo
     final int ERROR = 0;
     final int WARNING = 1;
     final int DEBUG = 2;
-
+    
+    //socket de entrada y Printer de salida de datos
+    private Socket peticionEntrante = null;     // representa la petición de nuestro cliente
+    private PrintWriter out = null;     // representa el buffer donde escribimos la respuesta
+    
+    //peticion realizada
+    String requestMethod;
+    //archivo solicitado
+    String requestFile;
+    //Parametros de la peticion
+    String parametros;
+    
     void depura(String mensaje)
     {
         depura(mensaje,DEBUG);
@@ -20,18 +36,15 @@ class peticionWeb extends Thread
         System.out.println(currentThread().toString() + " - " + mensaje);
     }   
 
-    private Socket peticionEntrante     = null;     // representa la petición de nuestro cliente
-    private PrintWriter out     = null;     // representa el buffer donde escribimos la respuesta
-    String requestType;
-    String requestFile;
-    peticionWeb(Socket peticion)
+
+   PeticionWeb(Socket peticion)
     {
         depura("El contador es " + contador);
         
         contador ++;
         
         //Variables que guardan el tipo de peticion y el archivo buscado.
-        requestType=null;
+        requestMethod=null;
         requestFile=null;
         
         
@@ -59,47 +72,8 @@ class peticionWeb extends Thread
                 //En la primera linea se encuentra el request type y el archivo, en caso de error se termina inmediatamente.
                if(cadena != null) 
                 {
-                    StringTokenizer st = new StringTokenizer(cadena);
-                    int cantidadElementos = st.countTokens();
-                    if(i==0){//tipo de peticion y archivo solicitado
-
-                        if (cantidadElementos >= 2) //debe tener al menos la peticion y el archivo
-                        {
-                            if(!guardarPeticion(st.nextToken(),st.nextToken())){//Si no existe el archivo o la peticion esta mal estructurada
-                                if(requestType==null){
-                                    out.println("400 Bad Request");
-                                }else{
-                                    out.println("404 File Not Found") ;
-                                }
-                                out.close();
-                                error=true;
-                            }
-                        }else{
-                            out.println("400 Bad Request") ;
-                            out.close();
-                            error=true;
-                        }
-                    
-                    }else if(i==3){//Que solicita como respuesta ACCEPT
-                        if (cantidadElementos >= 2) //debe tener al menos la peticion y el archivo
-                        {
-                            if(st.nextToken().equals("Accept:"))
-                            {
-                                if(esAceptado(st.nextToken())){
-                                    retornaFichero(requestFile);
-                                }else{
-                                    out.println("Error 406");
-                                }
-                                out.close();
-                            }       
-                        }else{
-                            out.println("400 Bad Request") ;
-                            out.close();
-                            error=true;
-                        }
-                        
-                    }
-
+                    depura(cadena);
+                    error=verificarCadena(i,cadena);
                 }
                 i++;
                     
@@ -115,34 +89,85 @@ class peticionWeb extends Thread
         depura("Hemos terminado");
     }
     
-    boolean esAceptado(String tipoArchivo){
+    public boolean verificarCadena(int i, String cadena){
+        StringTokenizer st = new StringTokenizer(cadena);
+        int cantidadElementos = st.countTokens();
+        boolean siError=true;
+        boolean noError=false;
+        if(cantidadElementos<2){
+                    out.println(error400) ;
+                    out.close();
+                    return true;
+        }
+                
+        switch(i){
+            case 0://encabezados
+                //parametro 1 es tipo de peticion parametro 2 el archivo
+                if(!guardarPeticion(st.nextToken(),st.nextToken())){//Si no existe el archivo o la peticion esta mal estructurada
+                    if(requestMethod==null){
+                        out.println(error400);
+                    }else{
+                        depura("aqui");
+                        out.println(error400) ;
+                    }
+                    out.close();
+                    return siError;
+                }else{
+                 return noError;
+                }
+            case 3://accept
+                if(st.nextToken().equals("Accept:"))
+                {
+                    if(esAceptado(st.nextToken())){
+                        retornaFichero();
+                        return noError;//no errores
 
-        if(!tipoArchivo.equals("*/*")){
-            String[] extensionAceptada = tipoArchivo.split("/");//En la posicion 1 tiene la extension
-            String[] ruta = requestFile.split("/");//En la posicion 1 tiene la extension
-            String archivoSolicitado = ruta[ruta.length-1];
-            String[] extensionSolicitada = archivoSolicitado.split("\\.");
-            if(extensionAceptada[1].equals(extensionSolicitada[1])){
-                return true;
-            }else{
-                return false;
-            }
+                    }else{
+                        out.println(error406);
+                        out.close();
+                        return siError;//existen
+                    }
+                }else{
+                    return siError;
+                }       
+            default://defecto no error para seguir leyendo
+                return noError;
+        }
+    
+    }
+    
+    boolean esAceptado(String tipoArchivo){
+        //primero verificamos que sean del mismo tipo
+        String[] extensionAceptada = tipoArchivo.split("/");//En la posicion 1 tiene la extension
+        String[] ruta = requestFile.split("/");//en la ultima posicion de la ruta esta el archivo que se solicita
+        String archivoSolicitado = ruta[ruta.length-1];//se obtiene el archivo
+        String[] extensionSolicitada = archivoSolicitado.split("\\.");//se separa por punto para obtener la extension
+
+        if(MimeTypes.exist(extensionAceptada[0],extensionAceptada[1])){//si la extension Aceptada es valida
+            //comparo la extension del archivio que me solicitan con la que debo retornar
+            //Si la extension aceptada es un * se le asigna el valor de la solicitada para compararlas.
+            extensionAceptada[1]=extensionAceptada[1].equals("*")?extensionSolicitada[1]:extensionAceptada[1];
+            return (extensionAceptada[1].equals(extensionSolicitada[1]))?true:false;
         }else{
-            return true;
+            return false;
         }
     }
     
     boolean guardarPeticion(String request,String file){
         if(request.equals("GET")||request.equals("POST")||request.equals("HEAD")){
-            requestType="GET";
-            file=existeFichero(file);
+            requestMethod=request;
+            //se obtiene nombre de archivo y parametros
+            String[] filePara = file.split("\\?");
+            parametros=filePara.length==2?null:filePara[1];
+            file=existeFichero(filePara[0]);//retorna el nombre del fichero o null si no existe
+            //si existe el fichero se guarda toda la direccion en la variable global requestFile
             if(file!=null){
                 requestFile=file;
                 return true;
             }else{
                 return false;
             }
-        }else{
+        }else{//Peticion invalida
             return false;
         }
     }
@@ -150,6 +175,8 @@ class peticionWeb extends Thread
     
     String existeFichero(String nombreFichero)
     {
+        //para una peticion sin archivo se utilza index.html
+        
         depura("Recuperamos el fichero " + nombreFichero);
         
         // comprobamos si tiene una barra al principio
@@ -177,60 +204,46 @@ class peticionWeb extends Thread
     }
 
     
-    void retornaFichero(String sfichero)
+    void retornaFichero()
     {
-        depura("Recuperamos el fichero " + sfichero);
-        
-        // comprobamos si tiene una barra al principio
-        if (sfichero.startsWith("/"))
-        {
-            sfichero = sfichero.substring(1) ;
-        }
-        
-        // si acaba en /, le retornamos el index.htm de ese directorio
-        // si la cadena esta vacia, no retorna el index.htm principal
-        if (sfichero.endsWith("/") || sfichero.equals(""))
-        {
-            sfichero = sfichero + "index.htm" ;
-        }
-        
+        depura("Recuperamos el fichero " + requestFile);
+        String[] ruta = requestFile.split("/");//en la ultima posicion de la ruta esta el archivo que se solicita
+        String archivoSolicitado = ruta[ruta.length-1];//se obtiene el archivo
+        String[] extensionSolicitada = archivoSolicitado.split("\\.");//se separa por punto para obtener la extension
         try
         {
             
             // Ahora leemos el fichero y lo retornamos
-            File mifichero = new File(sfichero) ;
+            File mifichero = new File(requestFile) ;
                 
             if (mifichero.exists()) 
             {
                 out.println("HTTP/1.0 200 ok");
                 out.println("Server: MiniServer/1.0");
                 out.println("Date: " + new Date());
-                out.println("Content-Type: text/html");
+                out.println("Content-Type: "+MimeTypes.getMimeType(extensionSolicitada[1]));
                 out.println("Content-Length: " + mifichero.length());
                 out.println("\n");
-            
-                BufferedReader ficheroLocal = new BufferedReader(new FileReader(mifichero));
-                
-                
-                String linea = "";
-                
-                do          
-                {
-                    linea = ficheroLocal.readLine();
-    
-                    if (linea != null )
+                if(requestMethod.equals("HEAD")){
+                    out.close();
+                }else{   
+                    BufferedReader ficheroLocal = new BufferedReader(new FileReader(mifichero));
+                    String linea = "";
+                    do          
                     {
-                        // sleep(500);
-                        out.println(linea);
+                        linea = ficheroLocal.readLine();
+        
+                        if (linea != null )
+                        {
+                            // sleep(500);
+                            out.println(linea);
+                        }
                     }
-                }
-                while (linea != null);
-                
-                depura("fin envio fichero");
-                
-                ficheroLocal.close();
-                out.close();
-                
+                    while (linea != null);
+                    depura("fin envio fichero");
+                    ficheroLocal.close();
+                    out.close();
+                }   
             }  // fin de si el fiechero existe 
             else
             {

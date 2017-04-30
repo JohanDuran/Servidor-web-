@@ -1,5 +1,5 @@
 #BlueJ class context
-comment0.target=servidorWeb
+comment0.target=ServidorWeb
 comment1.params=mensaje
 comment1.target=void\ depura(java.lang.String)
 comment2.params=mensaje\ gravedad
