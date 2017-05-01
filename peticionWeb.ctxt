@@ -2,6 +2,10 @@
 comment0.target=PeticionWeb
 comment1.params=mensaje
 comment1.target=void\ depura(java.lang.String)
+comment10.params=index\ head
+comment10.target=boolean\ verificaEncabezado(int,\ java.lang.String)
+comment11.params=
+comment11.target=void\ completaBitacora()
 comment2.params=mensaje\ gravedad
 comment2.target=void\ depura(java.lang.String,\ int)
 comment3.params=peticion
@@ -18,4 +22,4 @@ comment8.params=nombreFichero
 comment8.target=java.lang.String\ existeFichero(java.lang.String)
 comment9.params=
 comment9.target=void\ retornaFichero()
-numComments=10
+numComments=12

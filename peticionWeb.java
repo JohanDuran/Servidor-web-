@@ -7,9 +7,11 @@ class PeticionWeb extends Thread
     //cantidad de peticiones
     int contador = 0;
     //Tipos de error
-    String error400="Error 400 - Bad ";
+    String error400="Error 400 - Bad Request";
     String error404="Error 404 - Not Found";
     String error406="Error 406 - Not Acceptable";
+    //encabezados aceptados
+    String []encabezados={"Head:","Host:","User-Agent:","Accept:","Content-Length:","Content-Type:"};
     //variables de debuggeo
     final int ERROR = 0;
     final int WARNING = 1;
@@ -27,6 +29,8 @@ class PeticionWeb extends Thread
     String parametros;
     //PARA POST: tamaño de los parametros
     int contentLength;
+    //how made the petition
+    String referer;
     
     void depura(String mensaje)
     {
@@ -92,6 +96,7 @@ class PeticionWeb extends Thread
                 }
             //Si no existen errores se retorna el fichero
             retornaFichero();
+            completaBitacora();
         }
         catch(Exception e)
         {
@@ -102,49 +107,53 @@ class PeticionWeb extends Thread
     }
     
     public boolean verificarCadena(int i, String cadena){
-        StringTokenizer st = new StringTokenizer(cadena);
-        int cantidadElementos = st.countTokens();
+        String[] solicitud = cadena.split(" ");
+        int cantidadElementos = solicitud.length;
         boolean siError=true;
         boolean noError=false;
+        
+        //verificamos que sea la cantidad correcta de parámetros
         if(cantidadElementos<2){
             depura("cantidad de parametros correcta");
-            out.println(error400+cadena) ;
+            out.println(error400) ;
             out.close();
-            return true;
+            return siError;
         }
-                
+        
+        //verificamos que sea el encabezado correcto
+        
+        if(!verificaEncabezado(i,solicitud[0])){
+          out.println(error400+"JAJA");
+          out.close();
+          return siError;
+        }
+        
         switch(i){
             case 0://encabezados
                 //parametro 1 es tipo de peticion parametro 2 el archivo
-                if(!guardarPeticion(st.nextToken(),st.nextToken())){//Si no existe el archivo o la peticion esta mal estructurada
-                    if(requestMethod==null){//Metodo incorrecto
+                if(!guardarPeticion(solicitud[0],solicitud[1])){//Si no existe el archivo o la peticion esta mal estructurada
+                    if(requestMethod==null||requestPath==null){//Metodo incorrecto
                         out.println(error400);
-                    }else{//archivo no existe
-                        out.println(error400) ;
+                        out.close();
                     }
-                    out.close();
                     return siError;
                 }else{
                  return noError;
                 }
+                
+            case 1:
+                referer=solicitud[1];      
+                return noError;
             case 3://accept
-                if(st.nextToken().equals("Accept:"))
-                {
-                    if(esAceptado(st.nextToken())){
-                        return noError;//no errores
-
-                    }else{
-                        out.println(error406);
-                        out.close();
-                        return siError;//existen
-                    }
+                if(esAceptado(solicitud[1])){
+                    return noError;//no errores
                 }else{
-                    return siError;
-                }       
+                    out.println(error406);
+                    out.close();
+                    return siError;//existen
+                }
             case 4://lenght POST only
-                String[] textoValor=cadena.split(" ");
-                int valor = textoValor.length==2?Integer.parseInt(textoValor[1]):0;
-                contentLength = valor;
+                contentLength = Integer.parseInt(solicitud[1]);
                 return noError;
             default://defecto no error para seguir leyendo
                 return noError;
@@ -170,20 +179,16 @@ class PeticionWeb extends Thread
     }
     
     boolean guardarPeticion(String request,String file){
-        if(request.equals("GET")||request.equals("POST")||request.equals("HEAD")){
-            requestMethod=request;
-            //se obtiene nombre de archivo y parametros
-            String[] filePara = file.split("\\?");
-            parametros=filePara.length==2?filePara[1]:null;
-            file=existeFichero(filePara[0]);//retorna el nombre del fichero o null si no existe
-            //si existe el fichero se guarda toda la direccion en la variable global requestPath
-            if(file!=null){
-                requestPath=file;
-                return true;
-            }else{
-                return false;
-            }
-        }else{//Peticion invalida
+        requestMethod=request;
+        //se obtiene nombre de archivo y parametros
+        String[] filePara = file.split("\\?");
+        parametros=filePara.length==2?filePara[1]:null;
+        file=existeFichero(filePara[0]);//retorna el nombre del fichero o null si no existe
+        //si existe el fichero se guarda toda la direccion en la variable global requestPath
+        if(file!=null){
+            requestPath=file;
+            return true;
+        }else{
             return false;
         }
     }
@@ -275,5 +280,36 @@ class PeticionWeb extends Thread
         }
 
     }
+    
+    public boolean verificaEncabezado(int index, String head){
+        if(index==0){//Si es el metodo
+            if(head.equals("GET")||head.equals("POST")||head.equals("HEAD")){
+                return true;
+            }else{
+                return false;
+            }
+        }else{//para todos los demas
+            if(encabezados[index].equals(head)){
+                return true;
+            }else{
+                return false;
+            }
+        }
+
+    }
+
+    public void completaBitacora(){
+        //peticion realizada
+        depura("BITACORA "+requestMethod);
+        //ruta  y archivo solicitado
+        depura("BITACORA "+requestPath);
+        //Parametros de la peticion
+        depura("BITACORA "+parametros);
+        //PARA POST: tamaño de los parametros
+        depura("BITACORA "+contentLength);
+        //how made the petition
+        depura("BITACORA "+referer);
+    }
 }
+
 
