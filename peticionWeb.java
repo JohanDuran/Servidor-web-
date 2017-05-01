@@ -7,7 +7,7 @@ class PeticionWeb extends Thread
     //cantidad de peticiones
     int contador = 0;
     //Tipos de error
-    String error400="Error 400 - Bad Request";
+    String error400="Error 400 - Bad ";
     String error404="Error 404 - Not Found";
     String error406="Error 406 - Not Acceptable";
     //variables de debuggeo
@@ -21,10 +21,12 @@ class PeticionWeb extends Thread
     
     //peticion realizada
     String requestMethod;
-    //archivo solicitado
-    String requestFile;
+    //ruta  y archivo solicitado
+    String requestPath;
     //Parametros de la peticion
     String parametros;
+    //PARA POST: tamaño de los parametros
+    int contentLength;
     
     void depura(String mensaje)
     {
@@ -45,7 +47,7 @@ class PeticionWeb extends Thread
         
         //Variables que guardan el tipo de peticion y el archivo buscado.
         requestMethod=null;
-        requestFile=null;
+        requestPath=null;
         
         
         peticionEntrante = peticion;
@@ -68,18 +70,28 @@ class PeticionWeb extends Thread
             boolean error = false;
             do{ 
                 cadena = in.readLine();
-                
+                depura("CADENA-----  "+cadena);
                 //En la primera linea se encuentra el request type y el archivo, en caso de error se termina inmediatamente.
-               if(cadena != null) 
+               if(cadena != null&&!cadena.equals("")) 
                 {
-                    depura(cadena);
                     error=verificarCadena(i,cadena);
                 }
                 i++;
                     
             }
             while (cadena != null && cadena.length() != 0 && !error);//mientras no existan errores y exista linea
-
+           
+            //Para el metodo post el input buffer termina al encontrar \n\r por lo tanto se debe continuar leyendo para recuperar los parametros
+            if(requestMethod.equals("POST")){//no es tomado en cuenta dentro de los errores
+                String postParameters="";
+                for (int j = 0; j < contentLength; j++) {
+                    int c = in.read();
+                    postParameters+=(char)c;
+               } 
+                parametros=postParameters.equals("")?null:postParameters;
+                }
+            //Si no existen errores se retorna el fichero
+            retornaFichero();
         }
         catch(Exception e)
         {
@@ -95,19 +107,19 @@ class PeticionWeb extends Thread
         boolean siError=true;
         boolean noError=false;
         if(cantidadElementos<2){
-                    out.println(error400) ;
-                    out.close();
-                    return true;
+            depura("cantidad de parametros correcta");
+            out.println(error400+cadena) ;
+            out.close();
+            return true;
         }
                 
         switch(i){
             case 0://encabezados
                 //parametro 1 es tipo de peticion parametro 2 el archivo
                 if(!guardarPeticion(st.nextToken(),st.nextToken())){//Si no existe el archivo o la peticion esta mal estructurada
-                    if(requestMethod==null){
+                    if(requestMethod==null){//Metodo incorrecto
                         out.println(error400);
-                    }else{
-                        depura("aqui");
+                    }else{//archivo no existe
                         out.println(error400) ;
                     }
                     out.close();
@@ -119,7 +131,6 @@ class PeticionWeb extends Thread
                 if(st.nextToken().equals("Accept:"))
                 {
                     if(esAceptado(st.nextToken())){
-                        retornaFichero();
                         return noError;//no errores
 
                     }else{
@@ -130,6 +141,11 @@ class PeticionWeb extends Thread
                 }else{
                     return siError;
                 }       
+            case 4://lenght POST only
+                String[] textoValor=cadena.split(" ");
+                int valor = textoValor.length==2?Integer.parseInt(textoValor[1]):0;
+                contentLength = valor;
+                return noError;
             default://defecto no error para seguir leyendo
                 return noError;
         }
@@ -139,7 +155,7 @@ class PeticionWeb extends Thread
     boolean esAceptado(String tipoArchivo){
         //primero verificamos que sean del mismo tipo
         String[] extensionAceptada = tipoArchivo.split("/");//En la posicion 1 tiene la extension
-        String[] ruta = requestFile.split("/");//en la ultima posicion de la ruta esta el archivo que se solicita
+        String[] ruta = requestPath.split("/");//en la ultima posicion de la ruta esta el archivo que se solicita
         String archivoSolicitado = ruta[ruta.length-1];//se obtiene el archivo
         String[] extensionSolicitada = archivoSolicitado.split("\\.");//se separa por punto para obtener la extension
 
@@ -158,11 +174,11 @@ class PeticionWeb extends Thread
             requestMethod=request;
             //se obtiene nombre de archivo y parametros
             String[] filePara = file.split("\\?");
-            parametros=filePara.length==2?null:filePara[1];
+            parametros=filePara.length==2?filePara[1]:null;
             file=existeFichero(filePara[0]);//retorna el nombre del fichero o null si no existe
-            //si existe el fichero se guarda toda la direccion en la variable global requestFile
+            //si existe el fichero se guarda toda la direccion en la variable global requestPath
             if(file!=null){
-                requestFile=file;
+                requestPath=file;
                 return true;
             }else{
                 return false;
@@ -206,15 +222,15 @@ class PeticionWeb extends Thread
     
     void retornaFichero()
     {
-        depura("Recuperamos el fichero " + requestFile);
-        String[] ruta = requestFile.split("/");//en la ultima posicion de la ruta esta el archivo que se solicita
+        depura("Recuperamos el fichero " + requestPath);
+        String[] ruta = requestPath.split("/");//en la ultima posicion de la ruta esta el archivo que se solicita
         String archivoSolicitado = ruta[ruta.length-1];//se obtiene el archivo
         String[] extensionSolicitada = archivoSolicitado.split("\\.");//se separa por punto para obtener la extension
         try
         {
             
             // Ahora leemos el fichero y lo retornamos
-            File mifichero = new File(requestFile) ;
+            File mifichero = new File(requestPath) ;
                 
             if (mifichero.exists()) 
             {
@@ -248,7 +264,7 @@ class PeticionWeb extends Thread
             else
             {
                 depura("No encuentro el fichero " + mifichero.toString());  
-                out.println("404 Not Found");
+                out.println(error404+"FLAG");
                 out.close();
             }
             
