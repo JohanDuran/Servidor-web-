@@ -1,9 +1,10 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
-
+import java.util.concurrent.TimeUnit;
 class PeticionWeb extends Thread
 {
+    Bitacora bitacora;
     //cantidad de peticiones
     int contador = 0;
     //Tipos de error
@@ -43,8 +44,9 @@ class PeticionWeb extends Thread
     }   
 
 
-   PeticionWeb(Socket peticion)
+   PeticionWeb(Socket peticion,Bitacora bitacora)
     {
+        this.bitacora=bitacora;
         depura("El contador es " + contador);
         
         contador ++;
@@ -299,16 +301,12 @@ class PeticionWeb extends Thread
     }
 
     public void completaBitacora(){
-        //peticion realizada
-        depura("BITACORA "+requestMethod);
-        //ruta  y archivo solicitado
-        depura("BITACORA "+requestPath);
-        //Parametros de la peticion
-        depura("BITACORA "+parametros);
-        //PARA POST: tamaño de los parametros
-        depura("BITACORA "+contentLength);
-        //how made the petition
-        depura("BITACORA "+referer);
+        depura("dentro");
+        /*try{
+            TimeUnit.SECONDS.sleep(10);
+        }catch(Exception e){}*/
+        bitacora.escribe(requestMethod, requestPath,parametros, "casca", referer);
+        depura("liberando");
     }
 }
 

@@ -1,0 +1,8 @@
+#BlueJ class context
+comment0.target=Bitacora
+comment1.params=
+comment1.target=Bitacora()
+comment1.text=\r\n\ Constructor\ for\ objects\ of\ class\ Bitacora\r\n
+comment2.params=requestMethod\ requestPath\ parametros\ contentLength\ referer
+comment2.target=boolean\ escribe(java.lang.String,\ java.lang.String,\ java.lang.String,\ java.lang.String,\ java.lang.String)
+numComments=3

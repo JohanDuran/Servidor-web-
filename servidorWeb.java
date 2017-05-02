@@ -42,11 +42,12 @@ public class ServidorWeb
             ServerSocket s = new ServerSocket(90);
 
             depura("Quedamos a la espera de conexion");
-            
+            Bitacora bitacora = new Bitacora();
+            bitacora.escribe("requestMethod","requestPath","parametros","contentLength","referer");
             while(true)  // bucle infinito .... ya veremos como hacerlo de otro modo
             {
                 Socket peticion = s.accept();
-                PeticionWeb pCliente = new PeticionWeb(peticion);
+                PeticionWeb pCliente = new PeticionWeb(peticion,bitacora);
                 pCliente.start();
             }
             
