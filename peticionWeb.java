@@ -305,7 +305,7 @@ class PeticionWeb extends Thread
         /*try{
             TimeUnit.SECONDS.sleep(10);
         }catch(Exception e){}*/
-        bitacora.escribe(requestMethod, requestPath,parametros, "casca", referer);
+        bitacora.escribe(requestMethod, requestPath,parametros, String.valueOf(contentLength), referer);
         depura("liberando");
     }
 }

@@ -1,10 +1,8 @@
 requestMethod	requestPath	parametros	contentLength	referer
 
-POST	index.html	mensaje=Hola+Mundo	casca	localhost:90
+GET	index.html	null	0	localhost:90
 
-POST	index.html	mensaje=Hola+Mundo	casca	localhost:90
+GET	index.html	null	0	localhost:90
 
-POST	index.html	mensaje=Hola+Mundo	casca	localhost:90
-
-POST	index.html	mensaje=Hola+Mundo	casca	localhost:90
+GET	index.html	null	0	localhost:90
 
