@@ -1,8 +1,0 @@
-requestMethod	requestPath	parametros	contentLength	referer
-
-GET	index.html	null	0	localhost:90
-
-GET	index.html	null	0	localhost:90
-
-GET	index.html	null	0	localhost:90
-

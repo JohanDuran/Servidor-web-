@@ -2,6 +2,8 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.sql.Timestamp;
+
 class PeticionWeb extends Thread
 {
     Bitacora bitacora;
@@ -27,43 +29,32 @@ class PeticionWeb extends Thread
     //ruta  y archivo solicitado
     String requestPath;
     //Parametros de la peticion
+    String URL;
     String parametros;
     //PARA POST: tamaño de los parametros
     int contentLength;
     //how made the petition
     String referer;
-    
-    void depura(String mensaje)
-    {
-        depura(mensaje,DEBUG);
-    }   
+    //Estampilla de tiempo
+    Timestamp timestamp;
+    //nombre del servidor
+    String serverName="ECCIServer";
 
-    void depura(String mensaje, int gravedad)
+   PeticionWeb(Socket peticion)
     {
-        System.out.println(currentThread().toString() + " - " + mensaje);
-    }   
-
-
-   PeticionWeb(Socket peticion,Bitacora bitacora)
-    {
-        this.bitacora=bitacora;
-        depura("El contador es " + contador);
-        
         contador ++;
         
         //Variables que guardan el tipo de peticion y el archivo buscado.
         requestMethod=null;
         requestPath=null;
         
-        
+        timestamp = new Timestamp(System.currentTimeMillis());
         peticionEntrante = peticion;
         setPriority(NORM_PRIORITY - 1); // hacemos que la prioridad sea baja
     }
 
     public void run() // Metodo run de la clase thread
     {
-        depura("Procesamos conexion");
-
         try
         {
             BufferedReader in = new BufferedReader (new InputStreamReader(peticionEntrante.getInputStream()));
@@ -76,7 +67,6 @@ class PeticionWeb extends Thread
             boolean error = false;
             do{ 
                 cadena = in.readLine();
-                depura("CADENA-----  "+cadena);
                 //En la primera linea se encuentra el request type y el archivo, en caso de error se termina inmediatamente.
                if(cadena != null&&!cadena.equals("")) 
                 {
@@ -102,10 +92,10 @@ class PeticionWeb extends Thread
         }
         catch(Exception e)
         {
-            depura("Error en servidor\n" + e.toString());
+            System.out.println("Error en servidor\n" + e.toString());
         }
             
-        depura("Hemos terminado");
+
     }
     
     public boolean verificarCadena(int i, String cadena){
@@ -116,7 +106,6 @@ class PeticionWeb extends Thread
         
         //verificamos que sea la cantidad correcta de parámetros
         if(cantidadElementos<2){
-            depura("cantidad de parametros correcta");
             out.println(error400) ;
             out.close();
             return siError;
@@ -125,7 +114,7 @@ class PeticionWeb extends Thread
         //verificamos que sea el encabezado correcto
         
         if(!verificaEncabezado(i,solicitud[0])){
-          out.println(error400+"JAJA");
+          out.println(error400);
           out.close();
           return siError;
         }
@@ -198,10 +187,8 @@ class PeticionWeb extends Thread
     
     String existeFichero(String nombreFichero)
     {
+        URL=nombreFichero;
         //para una peticion sin archivo se utilza index.html
-        
-        depura("Recuperamos el fichero " + nombreFichero);
-        
         // comprobamos si tiene una barra al principio
         if (nombreFichero.startsWith("/"))
         {
@@ -229,7 +216,6 @@ class PeticionWeb extends Thread
     
     void retornaFichero()
     {
-        depura("Recuperamos el fichero " + requestPath);
         String[] ruta = requestPath.split("/");//en la ultima posicion de la ruta esta el archivo que se solicita
         String archivoSolicitado = ruta[ruta.length-1];//se obtiene el archivo
         String[] extensionSolicitada = archivoSolicitado.split("\\.");//se separa por punto para obtener la extension
@@ -242,7 +228,7 @@ class PeticionWeb extends Thread
             if (mifichero.exists()) 
             {
                 out.println("HTTP/1.0 200 ok");
-                out.println("Server: MiniServer/1.0");
+                out.println("Server: "+serverName);
                 out.println("Date: " + new Date());
                 out.println("Content-Type: "+MimeTypes.getMimeType(extensionSolicitada[1]));
                 out.println("Content-Length: " + mifichero.length());
@@ -263,22 +249,20 @@ class PeticionWeb extends Thread
                         }
                     }
                     while (linea != null);
-                    depura("fin envio fichero");
                     ficheroLocal.close();
                     out.close();
                 }   
             }  // fin de si el fiechero existe 
             else
             {
-                depura("No encuentro el fichero " + mifichero.toString());  
-                out.println(error404+"FLAG");
+                out.println(error404);
                 out.close();
             }
             
         }
         catch(Exception e)
         {
-            depura("Error al retornar fichero");    
+            System.out.println("Error al retornar fichero");    
         }
 
     }
@@ -301,12 +285,7 @@ class PeticionWeb extends Thread
     }
 
     public void completaBitacora(){
-        depura("dentro");
-        /*try{
-            TimeUnit.SECONDS.sleep(10);
-        }catch(Exception e){}*/
-        bitacora.escribe(requestMethod, requestPath,parametros, String.valueOf(contentLength), referer);
-        depura("liberando");
+        Bitacora.escribe(requestMethod, String.valueOf(timestamp), serverName, referer, URL, parametros);
     }
 }
 

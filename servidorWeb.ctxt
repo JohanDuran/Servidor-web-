@@ -1,9 +1,5 @@
 #BlueJ class context
 comment0.target=ServidorWeb
-comment1.params=mensaje
-comment1.target=void\ depura(java.lang.String)
-comment2.params=mensaje\ gravedad
-comment2.target=void\ depura(java.lang.String,\ int)
-comment3.params=
-comment3.target=boolean\ arranca()
-numComments=4
+comment1.params=
+comment1.target=boolean\ arranca()
+numComments=2

@@ -14,23 +14,14 @@ import java.nio.channels.FileLock;
 
 public class Bitacora
 {
-    // instance variables - replace the example below with your own
-
-    /**
-     * Constructor for objects of class Bitacora
-     */
-    public Bitacora()
-    {
-
-    }
     
-    public boolean escribe(String requestMethod, String requestPath,String parametros, String contentLength,String referer){
+    public static boolean escribe(String requestMethod, String timestamp,String server, String referer, String requestPath,String parametros){
         try(FileWriter fw = new FileWriter("bitacora.txt", true);
             BufferedWriter bw = new BufferedWriter(fw);
             PrintWriter out = new PrintWriter(bw))
             
         {
-            out.println(requestMethod+"\t"+requestPath+"\t"+parametros+"\t"+contentLength+"\t"+referer+"\n");
+            out.println(requestMethod+"\t"+timestamp+"\t"+server+"\t"+referer+"\t"+requestPath+"\t"+parametros+"\n");
         } catch (IOException e) {
             return false;
         }

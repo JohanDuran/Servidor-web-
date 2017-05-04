@@ -12,6 +12,7 @@ public class controller
 {
 
     public static void main(){
+        System.out.println("Iniciamos el servidor");
         ServidorWeb server = new ServidorWeb();
         server.arranca();
     }

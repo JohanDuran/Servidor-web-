@@ -11,50 +11,26 @@ import java.util.*;
 
 public class ServidorWeb
 {
-    int puerto = 90;
-    
-    final int ERROR = 0;
-    final int WARNING = 1;
-    final int DEBUG = 2;
-    
-        
-    // funcion para centralizar los mensajes de depuracion
-
-    void depura(String mensaje)
-    {
-        depura(mensaje,DEBUG);
-    }   
-
-    void depura(String mensaje, int gravedad)
-    {
-        System.out.println("Mensaje: " + mensaje);
-    }   
-        
+    int puerto = 80;
     
     boolean arranca()
     {
-        depura("Arrancamos nuestro servidor",DEBUG);
+
         
         try
-        {
-        
-            
-            ServerSocket s = new ServerSocket(90);
-
-            depura("Quedamos a la espera de conexion");
-            Bitacora bitacora = new Bitacora();
-            bitacora.escribe("requestMethod","requestPath","parametros","contentLength","referer");
+        {   
+            ServerSocket s = new ServerSocket(puerto);
+            Bitacora.escribe("requestMethod\t", "timestamp\t","server\t", "referer\t", "URL\t","parametros\t");
             while(true)  // bucle infinito .... ya veremos como hacerlo de otro modo
             {
                 Socket peticion = s.accept();
-                PeticionWeb pCliente = new PeticionWeb(peticion,bitacora);
+                PeticionWeb pCliente = new PeticionWeb(peticion);
                 pCliente.start();
             }
             
         }
         catch(Exception e)
         {
-            depura("Error en servidor\n" + e.toString());
         }
         
         return true;
