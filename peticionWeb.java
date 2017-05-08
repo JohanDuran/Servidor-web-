@@ -44,12 +44,13 @@ class PeticionWeb extends Thread
     //nombre del servidor
     String serverName="ECCIServer";
 
+    String currentPath;
    PeticionWeb(Socket peticion)
     { 
         //asignación de prioridad normal
         setPriority(NORM_PRIORITY); 
         timestamp = new Timestamp(System.currentTimeMillis());
-
+        currentPath=System.getProperty("user.dir");
         peticionEntrante = peticion;
                 
     }
@@ -68,7 +69,6 @@ class PeticionWeb extends Thread
             boolean error = false;
             do{ 
                 cadena = in.readLine();
-                Debugger.print(cadena);
                 //En la primera linea se encuentra el request type y el archivo, en caso de error se termina inmediatamente.
                if(cadena != null&&!cadena.equals("")) 
                 {
@@ -147,8 +147,7 @@ class PeticionWeb extends Thread
                 return noError;
             case 3://accept MIME-TYPES
             //se verifica si el contenido no es aceptado
-                String[] acc = solicitud[1].split(",");
-                if(esAceptado(acc[0])){
+                if(esAceptado(solicitud[1])){
                     return noError;//no errores
                 }else{
                     out.println(error406);
@@ -170,21 +169,29 @@ class PeticionWeb extends Thread
     
     
     boolean esAceptado(String tipoArchivo){
-        //primero verificamos que sean del mismo tipo
-        String[] extensionAceptada = tipoArchivo.split("/");//En la posicion 1 tiene la extension
+        tipoArchivo =tipoArchivo.replaceAll(";",",");//para evitar los q de calidad
+        String[] accepted = tipoArchivo.split(",");//se divide en cada uno de los parametros
+        int cantidad = accepted.length;
         String[] ruta = requestPath.split("/");//en la ultima posicion de la ruta esta el archivo que se solicita
         String archivoSolicitado = ruta[ruta.length-1];//se obtiene el archivo
         String[] extensionSolicitada = archivoSolicitado.split("\\.");//se separa por punto para obtener la extension
-
-        if(MimeTypes.exist(extensionAceptada[0],extensionAceptada[1])){//si la extension Aceptada es valida
-            //comparo la extension del archivio que me solicitan con la que debo retornar
-            //Si la extension aceptada es un * se le asigna el valor de la solicitada para compararlas.
-            extensionAceptada[1]=extensionAceptada[1].equals("*")?extensionSolicitada[1]:extensionAceptada[1];
-            //Si es igual a la solicitada retorna true caso contrario false.
-            return (extensionAceptada[1].equals(extensionSolicitada[1]))?true:false;
-        }else{
-            return false;
+        for(int i=0;i<cantidad;i++){
+            //primero verificamos que sean del mismo tipo
+            String[] extensionAceptada = accepted[i].split("/");//En la posicion 1 tiene la extension 
+            
+            if(extensionAceptada.length == 2){//si no es dos quiere decir que no es un accept. Puede ser por ej un q=0.2
+                if(MimeTypes.exist(extensionAceptada[0],extensionAceptada[1])){//si la extension Aceptada es valida
+                    //comparo la extension del archivio que me solicitan con la que debo retornar
+                    //Si la extension aceptada es un * se le asigna el valor de la solicitada para compararlas.
+                    extensionAceptada[1]=extensionAceptada[1].equals("*")?extensionSolicitada[1]:extensionAceptada[1];
+                    //Si es igual a la solicitada retorna true caso contrario false.
+                    if(extensionAceptada[1].equals(extensionSolicitada[1])){
+                        return true;
+                    }
+                }        
+            }
         }
+        return false;
     }
     
     boolean guardarPeticion(String request,String file){
@@ -222,8 +229,10 @@ class PeticionWeb extends Thread
             nombreFichero = nombreFichero + "index.html" ;
         }
         
-            // Ahora leemos el fichero y lo retornamos
-            File archivo= new File(nombreFichero) ;
+        nombreFichero=currentPath+"/"+nombreFichero;
+
+        // Ahora leemos el fichero y lo retornamos
+        File archivo= new File(nombreFichero) ;
                 
         if (archivo.exists()) 
         {
@@ -253,7 +262,7 @@ class PeticionWeb extends Thread
                 out.println("Date: " + new Date());
                 out.println("Content-Type: "+MimeTypes.getMimeType(extensionSolicitada[1]));
                 out.println("Content-Length: " + tamano);
-                out.println("\n");
+                out.println("\r\n");
                 BufferedReader ficheroLocal = new BufferedReader(new FileReader(mifichero));
                 String linea = "";
                 do          
