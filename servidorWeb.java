@@ -1,29 +1,26 @@
-/*Ejemplo de Servidor Web en Java
- *
- * Autor: Johan Durán Kenneth Calvo
- *
- **/
+/**
+ * Universidad de Costa Rica
+ * Desarrollo de aplicaciones para internet
+ * Tarea programada #1
+ * @author (Johan Durán - Kenneth Calvo) 
+ * @version (1.0)
+ */
 
-
-import java.io.*;
 import java.net.*;
-import java.util.*;
-
 public class ServidorWeb
 {
     int puerto = 80;
     
-    boolean arranca()
+    void inicia()
     {
-
         
         try
         {   
             ServerSocket s = new ServerSocket(puerto);
-            Bitacora.escribe("requestMethod\t", "timestamp\t","server\t", "referer\t", "URL\t","parametros\t");
-            while(true)  // bucle infinito .... ya veremos como hacerlo de otro modo
-            {
+            Bitacora.escribe("requestMethod", "timestamp","server", "referer", "URL","parametros");
+            while(true){
                 Socket peticion = s.accept();
+                Debbuger.print("Recibiendo petición");
                 PeticionWeb pCliente = new PeticionWeb(peticion);
                 pCliente.start();
             }
@@ -31,9 +28,9 @@ public class ServidorWeb
         }
         catch(Exception e)
         {
+            Debbuger.print("Error en el servidor");
         }
         
-        return true;
     }
     
 }

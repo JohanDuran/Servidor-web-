@@ -1,14 +1,17 @@
+/**
+ * Universidad de Costa Rica
+ * Desarrollo de aplicaciones para internet
+ * Tarea programada #1
+ * @author (Johan Durán - Kenneth Calvo) 
+ * @version (1.0)
+ */
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.sql.Timestamp;
 
 class PeticionWeb extends Thread
 {
-    Bitacora bitacora;
-    //cantidad de peticiones
-    int contador = 0;
     //Tipos de error
     String error400="Error 400 - Bad Request";
     String error404="Error 404 - Not Found";
@@ -26,10 +29,11 @@ class PeticionWeb extends Thread
     
     //peticion realizada
     String requestMethod;
-    //ruta  y archivo solicitado
+    //ruta  y archivo solicitado en caso de ser / se le agrega index
     String requestPath;
-    //Parametros de la peticion
+    //URL es la recibida de la petición sin agregar nada
     String URL;
+    //Parametros de la peticion
     String parametros;
     //PARA POST: tamaño de los parametros
     int contentLength;
@@ -41,24 +45,22 @@ class PeticionWeb extends Thread
     String serverName="ECCIServer";
 
    PeticionWeb(Socket peticion)
-    {
-        contador ++;
-        
-        //Variables que guardan el tipo de peticion y el archivo buscado.
-        requestMethod=null;
-        requestPath=null;
-        
+    { 
+        //asignación de prioridad normal
+        setPriority(NORM_PRIORITY); 
         timestamp = new Timestamp(System.currentTimeMillis());
+
+        Debbuger.print("timeStamp "+timestamp);
         peticionEntrante = peticion;
-        setPriority(NORM_PRIORITY - 1); // hacemos que la prioridad sea baja
+                
     }
 
-    public void run() // Metodo run de la clase thread
+    public void run() //método principal de la clase thread
     {
         try
         {
             BufferedReader in = new BufferedReader (new InputStreamReader(peticionEntrante.getInputStream()));
-            out = new PrintWriter(new OutputStreamWriter(peticionEntrante.getOutputStream(),"8859_1"),true) ;
+            out = new PrintWriter(new OutputStreamWriter(peticionEntrante.getOutputStream(),"UTF-8"),true) ;
 
 
             String cadena = "";     // cadena donde almacenamos las lineas que leemos
@@ -73,22 +75,27 @@ class PeticionWeb extends Thread
                     error=verificarCadena(i,cadena);
                 }
                 i++;
-                    
             }
             while (cadena != null && cadena.length() != 0 && !error);//mientras no existan errores y exista linea
            
             //Para el metodo post el input buffer termina al encontrar \n\r por lo tanto se debe continuar leyendo para recuperar los parametros
-            if(requestMethod.equals("POST")){//no es tomado en cuenta dentro de los errores
+            if(requestMethod.equals("POST")&&!error){//no es tomado en cuenta dentro de los errores
                 String postParameters="";
                 for (int j = 0; j < contentLength; j++) {
                     int c = in.read();
                     postParameters+=(char)c;
                } 
                 parametros=postParameters.equals("")?null:postParameters;
-                }
+            }
             //Si no existen errores se retorna el fichero
-            retornaFichero();
-            completaBitacora();
+            if(!error){
+                retornaFichero();
+                completaBitacora();
+                Debbuger.print("Petición completada con exito");
+            }else{
+                Debbuger.print("Errores en el servidor");
+            }
+            
         }
         catch(Exception e)
         {
@@ -99,7 +106,9 @@ class PeticionWeb extends Thread
     }
     
     public boolean verificarCadena(int i, String cadena){
+        //Se obtienen los toquen de la cadena
         String[] solicitud = cadena.split(" ");
+        //deben venir dos elementos key-value
         int cantidadElementos = solicitud.length;
         boolean siError=true;
         boolean noError=false;
@@ -111,14 +120,19 @@ class PeticionWeb extends Thread
             return siError;
         }
         
-        //verificamos que sea el encabezado correcto
-        
+        /*verificamos que sea el encabezado correcto
+         * i: indica la sección actual por ej accept, content-type solamente para indexar el vector que contiene los 
+         * encabezados
+         * Solicitud en la posición 0 contiene el texto asociado a en indice. Se verifica para encabezados en forma
+         * independiente y para todos los demás con el vector de encabezados
+           */
         if(!verificaEncabezado(i,solicitud[0])){
           out.println(error400);
           out.close();
           return siError;
         }
         
+        //si se llega acá la estructura de la petición es correcta
         switch(i){
             case 0://encabezados
                 //parametro 1 es tipo de peticion parametro 2 el archivo
@@ -132,10 +146,11 @@ class PeticionWeb extends Thread
                  return noError;
                 }
                 
-            case 1:
+            case 1://indica el host que hizo la solicitud
                 referer=solicitud[1];      
                 return noError;
-            case 3://accept
+            case 3://accept MIME-TYPES
+            //se verifica si el contenido no es aceptado
                 if(esAceptado(solicitud[1])){
                     return noError;//no errores
                 }else{
@@ -144,8 +159,12 @@ class PeticionWeb extends Thread
                     return siError;//existen
                 }
             case 4://lenght POST only
-                contentLength = Integer.parseInt(solicitud[1]);
-                return noError;
+                try{
+                    contentLength = Integer.parseInt(solicitud[1]);
+                }catch(Exception e){
+                    return siError;
+                }
+            return noError;
             default://defecto no error para seguir leyendo
                 return noError;
         }
@@ -163,6 +182,7 @@ class PeticionWeb extends Thread
             //comparo la extension del archivio que me solicitan con la que debo retornar
             //Si la extension aceptada es un * se le asigna el valor de la solicitada para compararlas.
             extensionAceptada[1]=extensionAceptada[1].equals("*")?extensionSolicitada[1]:extensionAceptada[1];
+            //Si es igual a la solicitada retorna true caso contrario false.
             return (extensionAceptada[1].equals(extensionSolicitada[1]))?true:false;
         }else{
             return false;
@@ -170,10 +190,12 @@ class PeticionWeb extends Thread
     }
     
     boolean guardarPeticion(String request,String file){
-        requestMethod=request;
+        requestMethod=request;//GET POST HEAD
         //se obtiene nombre de archivo y parametros
         String[] filePara = file.split("\\?");
+        //Si el tamaño no es dos quiere decir que no existen parametros o en un POST
         parametros=filePara.length==2?filePara[1]:null;
+        //En la posición 0 de filePara se encuentra el archivo solicitado
         file=existeFichero(filePara[0]);//retorna el nombre del fichero o null si no existe
         //si existe el fichero se guarda toda la direccion en la variable global requestPath
         if(file!=null){
@@ -233,7 +255,7 @@ class PeticionWeb extends Thread
                 out.println("Content-Type: "+MimeTypes.getMimeType(extensionSolicitada[1]));
                 out.println("Content-Length: " + mifichero.length());
                 out.println("\n");
-                if(requestMethod.equals("HEAD")){
+                if(requestMethod.equals("HEAD")){//Para el caso de Head no se imprime el cuerpo del archivo
                     out.close();
                 }else{   
                     BufferedReader ficheroLocal = new BufferedReader(new FileReader(mifichero));
@@ -244,7 +266,6 @@ class PeticionWeb extends Thread
         
                         if (linea != null )
                         {
-                            // sleep(500);
                             out.println(linea);
                         }
                     }
@@ -262,7 +283,7 @@ class PeticionWeb extends Thread
         }
         catch(Exception e)
         {
-            System.out.println("Error al retornar fichero");    
+            Debbuger.print("Error al retornar fichero");    
         }
 
     }
@@ -275,6 +296,7 @@ class PeticionWeb extends Thread
                 return false;
             }
         }else{//para todos los demas
+            //Si el encabezado recibido existe en el servidor retornar verdadero.
             if(encabezados[index].equals(head)){
                 return true;
             }else{
@@ -285,7 +307,8 @@ class PeticionWeb extends Thread
     }
 
     public void completaBitacora(){
-        Bitacora.escribe(requestMethod, String.valueOf(timestamp), serverName, referer, URL, parametros);
+        //se escriben los parametros a la bitacora
+        Bitacora.escribe(requestMethod, String.valueOf(timestamp.getTime()), serverName, referer, URL, parametros);
     }
 }
 

@@ -1,19 +1,16 @@
-
 /**
- * Write a description of class controller here.
- *
- * @author (your name)
- * @version (a version number or a date)
+ * Universidad de Costa Rica
+ * Desarrollo de aplicaciones para internet
+ * Tarea programada #1
+ * @author (Johan Durán - Kenneth Calvo) 
+ * @version (1.0)
  */
-
-import java.io.*;
-import java.util.*;
-public class controller
+public class Controller
 {
 
     public static void main(){
-        System.out.println("Iniciamos el servidor");
+        Debbuger.print("iniciando el servidor web - ECCI UCR");
         ServidorWeb server = new ServidorWeb();
-        server.arranca();
+        server.inicia();
     }
 }

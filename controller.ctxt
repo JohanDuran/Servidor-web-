@@ -1,5 +1,6 @@
 #BlueJ class context
-comment0.target=controller
+comment0.target=Controller
+comment0.text=\r\n\ Universidad\ de\ Costa\ Rica\r\n\ Desarrollo\ de\ aplicaciones\ para\ internet\r\n\ Tarea\ programada\ \#1\r\n\ @author\ (Johan\ Dur\u00E1n\ -\ Kenneth\ Calvo)\ \r\n\ @version\ (1.0)\r\n
 comment1.params=
 comment1.target=void\ main()
 numComments=2

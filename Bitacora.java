@@ -1,30 +1,27 @@
-
 /**
- * Write a description of class Bitacora here.
- * 
- * @author (your name) 
- * @version (a version number or a date)
+ * Universidad de Costa Rica
+ * Desarrollo de aplicaciones para internet
+ * Tarea programada #1
+ * @author (Johan Durán - Kenneth Calvo) 
+ * @version (1.0)
  */
 import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.io.*;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 
 public class Bitacora
 {
-    
     public static boolean escribe(String requestMethod, String timestamp,String server, String referer, String requestPath,String parametros){
+        Debbuger.print("Imprimiendo en Bitacora");
+        String outputText=String.format("%20s %20s %20s %20s %20s %20s \r\n",requestMethod,timestamp,server,referer,requestPath,parametros);
         try(FileWriter fw = new FileWriter("bitacora.txt", true);
             BufferedWriter bw = new BufferedWriter(fw);
             PrintWriter out = new PrintWriter(bw))
-            
         {
-            out.println(requestMethod+"\t"+timestamp+"\t"+server+"\t"+referer+"\t"+requestPath+"\t"+parametros+"\n");
+            out.println(outputText);
         } catch (IOException e) {
+            Debbuger.print("Error al imprimir en bitacora");
             return false;
         }
+        Debbuger.print("Impresión exitosa en bitacora");
         return true;
     }
 
