@@ -9,8 +9,25 @@ import java.io.*;
 
 public class Bitacora
 {
+    public static void escribeEncabezados(){
+        BufferedWriter writer =null;
+        try{
+            String outputText=String.format("%20s %20s %20s %20s %20s %20s \r\n","requestMethod", "timestamp","server", "referer", "URL","parametros");
+            File file = new File("bitacora.txt");
+            writer = new BufferedWriter(new FileWriter(file));
+            writer.write(outputText);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                writer.close();
+            } catch (Exception e) {}
+        }
+
+    }
+    
     public static boolean escribe(String requestMethod, String timestamp,String server, String referer, String requestPath,String parametros){
-        Debbuger.print("Imprimiendo en Bitacora");
+        Debugger.print("Imprimiendo en Bitacora");
         String outputText=String.format("%20s %20s %20s %20s %20s %20s \r\n",requestMethod,timestamp,server,referer,requestPath,parametros);
         try(FileWriter fw = new FileWriter("bitacora.txt", true);
             BufferedWriter bw = new BufferedWriter(fw);
@@ -18,10 +35,10 @@ public class Bitacora
         {
             out.println(outputText);
         } catch (IOException e) {
-            Debbuger.print("Error al imprimir en bitacora");
+            Debugger.print("Error al imprimir en bitacora");
             return false;
         }
-        Debbuger.print("Impresión exitosa en bitacora");
+        Debugger.print("Impresión exitosa en bitacora");
         return true;
     }
 

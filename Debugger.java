@@ -6,7 +6,7 @@
  * @version (1.0)
  */
 import javax.swing.JOptionPane; 
-public class Debbuger
+public class Debugger
 {
     //imprime un texto en consola de tipo String
     public static void print(String text){

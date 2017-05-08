@@ -50,7 +50,6 @@ class PeticionWeb extends Thread
         setPriority(NORM_PRIORITY); 
         timestamp = new Timestamp(System.currentTimeMillis());
 
-        Debbuger.print("timeStamp "+timestamp);
         peticionEntrante = peticion;
                 
     }
@@ -69,6 +68,7 @@ class PeticionWeb extends Thread
             boolean error = false;
             do{ 
                 cadena = in.readLine();
+                Debugger.print(cadena);
                 //En la primera linea se encuentra el request type y el archivo, en caso de error se termina inmediatamente.
                if(cadena != null&&!cadena.equals("")) 
                 {
@@ -91,9 +91,9 @@ class PeticionWeb extends Thread
             if(!error){
                 retornaFichero();
                 completaBitacora();
-                Debbuger.print("Petición completada con exito");
+                Debugger.print("Petición completada con exito");
             }else{
-                Debbuger.print("Errores en el servidor");
+                Debugger.print("Errores en el servidor");
             }
             
         }
@@ -126,12 +126,8 @@ class PeticionWeb extends Thread
          * Solicitud en la posición 0 contiene el texto asociado a en indice. Se verifica para encabezados en forma
          * independiente y para todos los demás con el vector de encabezados
            */
-        if(!verificaEncabezado(i,solicitud[0])){
-          out.println(error400);
-          out.close();
-          return siError;
-        }
-        
+        i = verificaEncabezado(solicitud[0]);
+
         //si se llega acá la estructura de la petición es correcta
         switch(i){
             case 0://encabezados
@@ -151,7 +147,8 @@ class PeticionWeb extends Thread
                 return noError;
             case 3://accept MIME-TYPES
             //se verifica si el contenido no es aceptado
-                if(esAceptado(solicitud[1])){
+                String[] acc = solicitud[1].split(",");
+                if(esAceptado(acc[0])){
                     return noError;//no errores
                 }else{
                     out.println(error406);
@@ -170,6 +167,7 @@ class PeticionWeb extends Thread
         }
     
     }
+    
     
     boolean esAceptado(String tipoArchivo){
         //primero verificamos que sean del mismo tipo
@@ -249,30 +247,28 @@ class PeticionWeb extends Thread
                 
             if (mifichero.exists()) 
             {
+                long tamano = mifichero.length()+2;
                 out.println("HTTP/1.0 200 ok");
                 out.println("Server: "+serverName);
                 out.println("Date: " + new Date());
                 out.println("Content-Type: "+MimeTypes.getMimeType(extensionSolicitada[1]));
-                out.println("Content-Length: " + mifichero.length());
+                out.println("Content-Length: " + tamano);
                 out.println("\n");
-                if(requestMethod.equals("HEAD")){//Para el caso de Head no se imprime el cuerpo del archivo
-                    out.close();
-                }else{   
-                    BufferedReader ficheroLocal = new BufferedReader(new FileReader(mifichero));
-                    String linea = "";
-                    do          
+                BufferedReader ficheroLocal = new BufferedReader(new FileReader(mifichero));
+                String linea = "";
+                do          
+                {
+                    linea = ficheroLocal.readLine();
+    
+                    if (linea != null )
                     {
-                        linea = ficheroLocal.readLine();
-        
-                        if (linea != null )
-                        {
-                            out.println(linea);
-                        }
+                        out.println(linea);
                     }
-                    while (linea != null);
-                    ficheroLocal.close();
-                    out.close();
-                }   
+                }
+                while (linea != null);
+                out.flush();
+                ficheroLocal.close();
+                out.close();    
             }  // fin de si el fiechero existe 
             else
             {
@@ -283,27 +279,17 @@ class PeticionWeb extends Thread
         }
         catch(Exception e)
         {
-            Debbuger.print("Error al retornar fichero");    
+            Debugger.print("Error al retornar fichero");    
         }
 
     }
     
-    public boolean verificaEncabezado(int index, String head){
-        if(index==0){//Si es el metodo
+    public int verificaEncabezado(String head){
             if(head.equals("GET")||head.equals("POST")||head.equals("HEAD")){
-                return true;
+                return 0;
             }else{
-                return false;
+                return Arrays.asList(encabezados).indexOf(head);
             }
-        }else{//para todos los demas
-            //Si el encabezado recibido existe en el servidor retornar verdadero.
-            if(encabezados[index].equals(head)){
-                return true;
-            }else{
-                return false;
-            }
-        }
-
     }
 
     public void completaBitacora(){

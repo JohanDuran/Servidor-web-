@@ -5,7 +5,6 @@
  * @author (Johan Durán - Kenneth Calvo) 
  * @version (1.0)
  */
-
 import java.net.*;
 public class ServidorWeb
 {
@@ -17,10 +16,10 @@ public class ServidorWeb
         try
         {   
             ServerSocket s = new ServerSocket(puerto);
-            Bitacora.escribe("requestMethod", "timestamp","server", "referer", "URL","parametros");
+            Bitacora.escribeEncabezados();
             while(true){
                 Socket peticion = s.accept();
-                Debbuger.print("Recibiendo petición");
+                Debugger.print("Recibiendo petición");
                 PeticionWeb pCliente = new PeticionWeb(peticion);
                 pCliente.start();
             }
@@ -28,7 +27,7 @@ public class ServidorWeb
         }
         catch(Exception e)
         {
-            Debbuger.print("Error en el servidor");
+            Debugger.print("Error en el servidor");
         }
         
     }

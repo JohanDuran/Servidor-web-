@@ -8,8 +8,8 @@
 public class Controller
 {
 
-    public static void main(){
-        Debbuger.print("iniciando el servidor web - ECCI UCR");
+    public static void main(String args[]){
+        Debugger.print("iniciando el servidor web - ECCI UCR");
         ServidorWeb server = new ServidorWeb();
         server.inicia();
     }

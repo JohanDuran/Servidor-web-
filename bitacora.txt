@@ -1,0 +1,11 @@
+       requestMethod            timestamp               server              referer                  URL           parametros 
+                 GET        1494222525245           ECCIServer            localhost                    /                 null 
+
+                HEAD        1494222582442           ECCIServer            localhost                    /                 null 
+
+                POST        1494222597860           ECCIServer            localhost          /index.html   mensaje=Hola+Mundo 
+
+                 GET        1494222611028           ECCIServer            localhost                    /            texto=123 
+
+                 GET        1494222656831           ECCIServer            localhost             /fig.png                 null 
+

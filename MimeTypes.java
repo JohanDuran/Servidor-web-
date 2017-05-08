@@ -38,7 +38,7 @@ public class MimeTypes
                 if(indexT==-1||indexS==-1){//Si no existe alguno de los dos se retorna falso
                     return false;
                 }else{//en caso de existir ambos deben tener el mismo indice
-                    return indexT==indexS?true:false;
+                    return true;//indexT==indexS?true:false;
                 }
             }
         }
