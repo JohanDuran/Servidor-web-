@@ -1,3 +1,11 @@
        requestMethod            timestamp               server              referer                  URL           parametros 
-                 GET        1494284570747           ECCIServer            localhost     /doc/index2.html                 null 
+                 GET        1494303398006           ECCIServer            localhost                    /                 null 
+
+                 GET        1494303399484           ECCIServer            localhost                    /                 null 
+
+                 GET        1494303400716           ECCIServer            localhost                    /                 null 
+
+                 GET        1494303407082           ECCIServer            localhost          /index.html                 null 
+
+                 GET        1494303417152           ECCIServer            localhost           /index.php         nombre=johan 
 

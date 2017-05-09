@@ -8,7 +8,7 @@
 import java.net.*;
 public class ServidorWeb
 {
-    int puerto = 80;
+    int puerto = 1234;
     
     void inicia()
     {

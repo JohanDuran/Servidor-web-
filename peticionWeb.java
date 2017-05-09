@@ -12,6 +12,8 @@ import java.sql.Timestamp;
 
 class PeticionWeb extends Thread
 {
+    //Para archivos php
+    boolean isPHP;
     //Tipos de error
     String error400="Error 400 - Bad Request";
     String error404="Error 404 - Not Found";
@@ -43,8 +45,11 @@ class PeticionWeb extends Thread
     Timestamp timestamp;
     //nombre del servidor
     String serverName="ECCIServer";
-
+    
+    //Control de paths y lineas
     String currentPath;
+    String fS=File.separator;
+    String nL=System.getProperty("line.separator");
    PeticionWeb(Socket peticion)
     { 
         //asignación de prioridad normal
@@ -175,6 +180,7 @@ class PeticionWeb extends Thread
         String[] ruta = requestPath.split("/");//en la ultima posicion de la ruta esta el archivo que se solicita
         String archivoSolicitado = ruta[ruta.length-1];//se obtiene el archivo
         String[] extensionSolicitada = archivoSolicitado.split("\\.");//se separa por punto para obtener la extension
+        isPHP = extensionSolicitada[1].equals("php")?true:false;
         for(int i=0;i<cantidad;i++){
             //primero verificamos que sean del mismo tipo
             String[] extensionAceptada = accepted[i].split("/");//En la posicion 1 tiene la extension 
@@ -229,7 +235,7 @@ class PeticionWeb extends Thread
             nombreFichero = nombreFichero + "index.html" ;
         }
         
-        nombreFichero=currentPath+"/"+nombreFichero;
+        nombreFichero=currentPath+fS+nombreFichero;
 
         // Ahora leemos el fichero y lo retornamos
         File archivo= new File(nombreFichero) ;
@@ -256,28 +262,48 @@ class PeticionWeb extends Thread
                 
             if (mifichero.exists()) 
             {
-                long tamano = mifichero.length()+2;
+                String salida = "";
+                if(isPHP){//para obtener la salida del archivo php solicitado
+                    ProcessBuilder pb = new ProcessBuilder("php", requestPath);
+                    Map<String, String> env = pb.environment();
+                    String[]parametrosArr=parametros.split("&");
+                    for(int i=0;i<parametrosArr.length;i++){
+                        //set environment variable 
+                        String[] keyValue=parametrosArr[i].split("=");
+                        if(keyValue.length==2){
+                            env.put(keyValue[0], keyValue[1]);
+                        }
+                    }
+                    
+                    Process p = pb.start();
+                    BufferedReader in = new BufferedReader(new InputStreamReader( p.getInputStream()));
+                    p.waitFor();
+                    String line = null;
+                    while ((line = in.readLine()) != null) {
+                        salida+=line+nL;
+                    }   
+                    in.close();        
+                }else{
+                    BufferedReader ficheroLocal = new BufferedReader(new FileReader(mifichero));
+                    String line = null;
+                    while ((line = ficheroLocal.readLine()) != null) {
+                        salida+=line+nL;
+                    }
+                    ficheroLocal.close();
+                }
+                //aqui van encabezados
+                long tamano = salida.length()+2;
                 out.println("HTTP/1.0 200 ok");
                 out.println("Server: "+serverName);
                 out.println("Date: " + new Date());
                 out.println("Content-Type: "+MimeTypes.getMimeType(extensionSolicitada[1]));
                 out.println("Content-Length: " + tamano);
-                out.println("\r\n");
-                BufferedReader ficheroLocal = new BufferedReader(new FileReader(mifichero));
-                String linea = "";
-                do          
-                {
-                    linea = ficheroLocal.readLine();
-    
-                    if (linea != null )
-                    {
-                        out.println(linea);
-                    }
-                }
-                while (linea != null);
+                out.println(nL);
+                //aquí se imprime el archivo
+                out.println(salida);
                 out.flush();
-                ficheroLocal.close();
-                out.close();    
+                out.close();
+                
             }  // fin de si el fiechero existe 
             else
             {

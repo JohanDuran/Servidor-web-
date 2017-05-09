@@ -45,9 +45,14 @@ public class MimeTypes
     }
     
     public static String getMimeType(String subTipo){
-        int indexS=Arrays.asList(subTipos).indexOf(subTipo);
-        String sT=subTipos[indexS];
-        String t=tipos[indexS];
-        return t+"/"+sT;
+        if(subTipo.equals("php")){
+            return "text/plain";
+        }else{
+            int indexS=Arrays.asList(subTipos).indexOf(subTipo);
+            String sT=subTipos[indexS];
+            String t=tipos[indexS];
+            return t+"/"+sT;
+        }
+
     }
 }
